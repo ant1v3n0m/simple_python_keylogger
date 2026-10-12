@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,6 +13,17 @@ from typing import TextIO
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+
+
+def default_log_directory() -> Path:
+    """Keep session data in a user-writable location outside installed code."""
+    if os.name == "nt":
+        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+        return base / "KeyboardEventRecorder" / "Sessions"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "KeyboardEventRecorder" / "Sessions"
+    base = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
+    return base / "keyboard-event-recorder" / "sessions"
 
 
 def normalize_key(key: object) -> dict[str, str]:
@@ -46,7 +58,7 @@ class SessionWriter:
         self.file: TextIO = os.fdopen(fd, "w", encoding="utf-8", newline="\n")
         self.closed = False
         try:
-            self._write({"time": utc_now(), "event": "start"})
+            self._write({"time": utc_now(), "event": "start", "schema_version": 1})
         except OSError:
             self.file.close()
             raise
