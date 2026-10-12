@@ -11,6 +11,7 @@ An installable, visible Python keylogger for testing keyboard input on a compute
 - Keep each session in a unique file. Backspace remains an event rather than rewriting history.
 - Stop on listener, callback, buffer, or file errors. A full event buffer is reported instead of silently losing keys.
 - Keep session data outside the installed application by default. There is no network reporting or automatic startup.
+- Simulate an upload using fixed sample keystrokes and an in-memory receiver. The demo shows the request and receipt without reading session files or sending anything online.
 
 ## Install and run
 
@@ -41,6 +42,10 @@ Timestamps are in UTC. A session ends with a `stop` record when the file can be 
 
 The `os` field is recorded locally once per session. Esc appears as a special-key event before the `escape_key` stop record.
 
+## Sample upload demo
+
+With recording stopped, click **Simulate sample upload**. A window shows a fixed `h`, `i`, `enter` payload and the receipt returned by an in-memory receiver. The receipt says `network_sent: false`. This illustrates payload creation and acknowledgement for a class presentation; it does not use your recorded keys, ask for a server address, or make a network request.
+
 ## Privacy and limits
 
 Use this only for a session you have permission to record. Global keyboard events can include passwords, messages, and other private input. Avoid entering secrets while recording, and delete session files when you no longer need them. The program does not identify password fields or automatically redact sensitive text. The files are local JSON Lines, not encrypted.
@@ -50,6 +55,7 @@ This is a desktop input testing tool. It does not promise capture from elevated,
 ## Project layout and tests
 
 - `app.py`: desktop interface and session controls.
+- `demo.py`: offline sample payload and in-memory receipt.
 - `recorder.py`: bounded event queue and start/stop lifecycle.
 - `keylog.py`: key normalization and session file format.
 - `main.pyw`: Windows double-click launcher.

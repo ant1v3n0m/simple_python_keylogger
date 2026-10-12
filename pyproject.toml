@@ -14,4 +14,4 @@ dependencies = ["pynput>=1.7,<2"]
 keyboard-recorder = "app:main"
 
 [tool.setuptools]
-py-modules = ["app", "keylog", "recorder"]
+py-modules = ["app", "demo", "keylog", "recorder"]

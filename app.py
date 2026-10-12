@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import tkinter as tk
 from pathlib import Path
+from tkinter.scrolledtext import ScrolledText
 from tkinter import filedialog, messagebox, ttk
 
+from demo import run_sample_upload_demo
 from keylog import default_log_directory
 from recorder import Recorder
 
@@ -19,7 +22,7 @@ class RecorderApp:
         self.root = root
         self.recorder = recorder or Recorder()
         self.root.title("Keyboard event recorder")
-        self.root.geometry("650x360")
+        self.root.geometry("650x410")
         self.root.resizable(False, False)
 
         self.folder = tk.StringVar(value=str(default_log_directory()))
@@ -59,11 +62,18 @@ class RecorderApp:
         self.start_button.pack(side="left")
         self.stop_button = ttk.Button(controls, text="Stop recording", command=self.stop, state="disabled")
         self.stop_button.pack(side="left", padx=10)
+        self.demo_button = ttk.Button(controls, text="Simulate sample upload", command=self.show_upload_demo)
+        self.demo_button.pack(side="left")
+        ttk.Label(
+            frame,
+            text="Upload demo uses fixed sample keys in memory. It never reads session files or sends data online.",
+            wraplength=600,
+        ).pack(anchor="w", pady=(13, 0))
         ttk.Label(
             frame,
             text="Session files are plain text and may contain private input. Use only with permission.",
             wraplength=600,
-        ).pack(anchor="w", pady=(13, 0))
+        ).pack(anchor="w", pady=(7, 0))
 
         root.bind("<Unmap>", self.on_unmap)
         root.protocol("WM_DELETE_WINDOW", self.close)
@@ -86,6 +96,22 @@ class RecorderApp:
         self.recorder.stop(reason)
         self.render()
 
+    def show_upload_demo(self) -> None:
+        result = run_sample_upload_demo()
+        window = tk.Toplevel(self.root)
+        window.title("Sample upload simulation — offline")
+        window.geometry("620x400")
+        window.transient(self.root)
+        ttk.Label(
+            window,
+            text="Synthetic sample only. No session file was read and nothing was sent online.",
+            padding=12,
+        ).pack(anchor="w")
+        display = ScrolledText(window, width=72, height=18, wrap="word")
+        display.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+        display.insert("1.0", json.dumps(result, ensure_ascii=False, indent=2))
+        display.configure(state="disabled")
+
     def poll(self) -> None:
         self.recorder.poll()
         self.render()
@@ -102,6 +128,7 @@ class RecorderApp:
             self.stop_button.configure(state="normal")
             self.folder_button.configure(state="disabled")
             self.duration_box.configure(state="disabled")
+            self.demo_button.configure(state="disabled")
         else:
             self.status.set("Stopped — error" if self.recorder.last_error else "Stopped")
             if self.recorder.last_error:
@@ -114,6 +141,7 @@ class RecorderApp:
             self.stop_button.configure(state="disabled")
             self.folder_button.configure(state="normal")
             self.duration_box.configure(state="readonly")
+            self.demo_button.configure(state="normal")
         if self.recorder.path is not None:
             self.location.set(f"Saved locally: {self.recorder.path}")
 
