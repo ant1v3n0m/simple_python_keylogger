@@ -36,6 +36,7 @@ class Recorder:
         self.stop_reason: str | None = None
         self.last_error: str | None = None
         self.overflowed = False
+        self.escape_requested = False
         self.callback_error: str | None = None
 
     @property
@@ -66,6 +67,7 @@ class Recorder:
         session_id = self.session_id
         self.events = queue.Queue(maxsize=self.queue_capacity)
         self.overflowed = False
+        self.escape_requested = False
         self.callback_error = None
         self.last_error = None
         self.stop_reason = None
@@ -75,7 +77,10 @@ class Recorder:
             if session_id != self.session_id:
                 return
             try:
-                event = (utc_now(), normalize_key(key))
+                normalized = normalize_key(key)
+                if normalized == {"kind": "special", "value": "esc"}:
+                    self.escape_requested = True
+                event = (utc_now(), normalized)
                 self.events.put_nowait(event)
             except queue.Full:
                 self.overflowed = True
@@ -125,6 +130,8 @@ class Recorder:
         elif self.callback_error is not None:
             self.last_error = f"Keyboard callback failed: {self.callback_error}"
             self.stop("callback_error")
+        elif self.escape_requested:
+            self.stop("escape_key")
         elif self.remaining_seconds == 0:
             self.stop("time_limit")
         elif self.listener is not None and not self.listener.running:

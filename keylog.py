@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -58,7 +59,7 @@ class SessionWriter:
         self.file: TextIO = os.fdopen(fd, "w", encoding="utf-8", newline="\n")
         self.closed = False
         try:
-            self._write({"time": utc_now(), "event": "start", "schema_version": 1})
+            self._write({"time": utc_now(), "event": "start", "schema_version": 1, "os": platform.system()})
         except OSError:
             self.file.close()
             raise

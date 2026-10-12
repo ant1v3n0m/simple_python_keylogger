@@ -1,4 +1,5 @@
 import json
+import platform
 import tempfile
 import unittest
 from pathlib import Path
@@ -38,6 +39,7 @@ class SessionWriterTests(unittest.TestCase):
             records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
             self.assertEqual([r["event"] for r in records], ["start", "key", "key", "stop"])
             self.assertEqual(records[0]["schema_version"], 1)
+            self.assertEqual(records[0]["os"], platform.system())
             self.assertEqual(records[1]["value"], "é'")
             self.assertEqual(records[2]["value"], "backspace")
             self.assertEqual(records[3]["reason"], "user_stopped")

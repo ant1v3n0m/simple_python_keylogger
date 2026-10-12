@@ -31,7 +31,7 @@ class RecorderApp:
         frame = ttk.Frame(root, padding=20)
         frame.pack(fill="both", expand=True)
         ttk.Label(frame, text="Keyboard event recorder", font=("Segoe UI", 17, "bold")).pack(anchor="w")
-        ttk.Label(frame, text="Records keys across apps only during a visible session.").pack(anchor="w", pady=(6, 15))
+        ttk.Label(frame, text="Records keys across apps only during a visible session. Press Esc to stop.").pack(anchor="w", pady=(6, 15))
 
         folder_row = ttk.Frame(frame)
         folder_row.pack(fill="x", pady=(0, 8))

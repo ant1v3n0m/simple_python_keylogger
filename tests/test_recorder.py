@@ -66,6 +66,19 @@ class RecorderTests(unittest.TestCase):
             self.assertFalse(recorder.running)
             self.assertEqual(read_records(path)[-1]["reason"], "time_limit")
 
+    def test_escape_stops_session_and_is_logged(self):
+        with tempfile.TemporaryDirectory() as directory:
+            factory = ListenerFactory()
+            recorder = Recorder(listener_factory=factory)
+            path = recorder.start(Path(directory), 300)
+            factory.instances[-1].on_press(SimpleNamespace(name="esc"))
+            recorder.poll()
+
+            records = read_records(path)
+            self.assertFalse(recorder.running)
+            self.assertEqual(records[-2]["value"], "esc")
+            self.assertEqual(records[-1]["reason"], "escape_key")
+
     def test_old_listener_cannot_write_to_new_session(self):
         with tempfile.TemporaryDirectory() as directory:
             factory = ListenerFactory()

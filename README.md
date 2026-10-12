@@ -5,6 +5,7 @@ An installable, visible Python keylogger for testing keyboard input on a compute
 ## Features
 
 - Choose a local output folder and a 5, 15, or 30 minute session limit.
+- Press Esc from any app to stop a recording session.
 - See recording status, event count, remaining time, and output path in the window.
 - Save timestamped JSON Lines records for Unicode characters and named special keys.
 - Keep each session in a unique file. Backspace remains an event rather than rewriting history.
@@ -30,13 +31,15 @@ The default session folder is `%LOCALAPPDATA%\KeyboardEventRecorder\Sessions` on
 Each line is a separate JSON object. For example:
 
 ```jsonl
-{"time":"2026-10-12T10:00:00.000+00:00","event":"start","schema_version":1}
+{"time":"2026-10-12T10:00:00.000+00:00","event":"start","schema_version":1,"os":"Windows"}
 {"time":"2026-10-12T10:00:01.000+00:00","event":"key","kind":"character","value":"a"}
 {"time":"2026-10-12T10:00:02.000+00:00","event":"key","kind":"special","value":"backspace"}
 {"time":"2026-10-12T10:00:03.000+00:00","event":"stop","reason":"user_stopped"}
 ```
 
 Timestamps are in UTC. A session ends with a `stop` record when the file can be written. A crash or storage failure may leave a partial final line; JSON Lines readers should handle that possibility.
+
+The `os` field is recorded locally once per session. Esc appears as a special-key event before the `escape_key` stop record.
 
 ## Privacy and limits
 
