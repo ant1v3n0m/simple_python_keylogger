@@ -1,104 +1,50 @@
+# Keyboard event recorder
 
-# Keylogger with Pynput
+A small, visible Python keylogger for testing keyboard input on a computer you control. It records key press events across desktop apps only after you click **Start recording**. Each session is local, time-limited, and easy to stop.
 
-This project implements a simple keylogger using Python and the `pynput` library. The keylogger listens for keypress events and logs them to a file (`logs.txt`). Special keys like `Space`, `Enter`, and `Backspace` are handled appropriately, and their behavior is reflected in the log.
+## What changed
 
-## Features
-- Logs all keypresses including letters, numbers, and symbols.
-- Handles special keys:
-  - `Space`: Logged as a space character (`' '`).
-  - `Enter`: Logged as a new line (`'\n'`).
-  - `Backspace`: Removes the last character from the log.
-- Supports other keys like `Shift` and `Ctrl` without logging them.
-  
-## Requirements
+- A desktop window shows whether recording is active, the event count, the remaining time, and the file path.
+- **Stop recording**, closing the window, minimizing it, or reaching 15 minutes ends the session.
+- Each press is a timestamped JSON Lines event. Character input is stored as Unicode; special keys such as Backspace are named events. The logger never rewrites earlier events.
+- Session files have unique names and are created exclusively, so an old session cannot be overwritten.
+- Files remain in the local `logs/` directory, which Git ignores. The program has no network, background startup, or remote reporting features.
 
-To run this project, you need the following dependencies:
+## Install and run
 
-- Python 3.x
-- `pynput` library
+Use Python 3.10 or newer on a desktop with a graphical session. From this repository:
 
-You can install the required library using pip:
-
-```bash
-pip install pynput
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe main.pyw
 ```
 
-## How to Use
+The app uses `pynput` for keyboard events and Tkinter for its window. Some operating systems may require keyboard monitoring permission. The recorder cannot capture keys in sessions or apps that the operating system denies it access to.
 
-1. **Clone the Repository:**
+Click **Start recording** to create a new file under `logs/`. Click **Stop recording** when finished. Every new start creates a separate file. The location of the current session file appears in the window.
 
-   ```bash
-   git clone https://github.com/your-username/keylogger-pynput.git
-   cd keylogger-pynput
-   ```
+## Log format
 
-2. **Run the Keylogger:**
+Each line is an independent JSON object. For example:
 
-   After cloning the repository, you can run the keylogger with:
-
-   ```bash
-   python keylogger.py
-   ```
-
-3. **Logging Keystrokes:**
-
-   The keylogger will create or append keystrokes to a file named `logs.txt` in the same directory. Special keys like `Space`, `Enter`, and `Backspace` are processed and handled correctly:
-   - `Space` → Logged as a space (` `).
-   - `Enter` → Logged as a newline.
-   - `Backspace` → Removes the last character from the log file.
-
-4. **Stopping the Keylogger:**
-
-   You can stop the keylogger by pressing `Ctrl + C` in the terminal where it is running.
-
-## Code Explanation
-
-The main functionality uses Python's `pynput` library to listen for key presses.
-
-### Key Components:
-- **`writetofile(key)`**: This function processes each keypress. It handles special keys such as `Space`, `Enter`, and `Backspace` appropriately. For regular characters, it appends them directly to the `logs.txt` file.
-- **`Listener`**: The listener captures all keyboard events and calls the `writetofile` function on each keypress.
-
-### Handling Special Keys:
-- **Space**: Replaces `'Key.space'` with a space character.
-- **Enter**: Replaces `'Key.enter'` with a newline character.
-- **Backspace**: Reads the `logs.txt` file, removes the last character, and writes the updated content back to the file.
-
-### Example Code Snippet:
-
-```python
-def writetofile(key):
-    keydata = str(key)
-    keydata = keydata.replace("'", "")
-
-    # Handle specific key replacements
-    if keydata == 'Key.space':
-        keydata = ' '
-    elif keydata == 'Key.enter':
-        keydata = '\n'
-    elif keydata == 'Key.backspace':
-        with open("logs.txt", 'r') as f:
-            content = f.read()
-        content = content[:-1] if content else content
-        with open("logs.txt", 'w') as f:
-            f.write(content)
-        return
-
-    with open("logs.txt", 'a') as f:
-        f.write(keydata)
+```jsonl
+{"time":"2026-10-12T10:00:00.000+00:00","event":"start"}
+{"time":"2026-10-12T10:00:01.000+00:00","event":"key","kind":"character","value":"a"}
+{"time":"2026-10-12T10:00:02.000+00:00","event":"key","kind":"special","value":"backspace"}
+{"time":"2026-10-12T10:00:03.000+00:00","event":"stop","reason":"user_stopped"}
 ```
 
-## Important Notes
+Backspace is recorded as an event rather than deleting a previous line. This preserves the actual sequence of key presses. Timestamps are in UTC.
 
-- This project is intended for educational purposes only. **Make sure to obtain permission** before using this keylogger on any computer or network.
-- Misuse of keylogging software can lead to legal consequences. Ensure that you comply with all relevant laws in your jurisdiction.
+## Privacy
 
-## Contributions
+Use this only for a session you have permission to record. Global keyboard events can include passwords, messages, and other private input. Avoid entering secrets while a session is active. Review and delete session files when you no longer need them. The `logs/` directory is excluded from Git, but copies and backups of those files still need care.
 
-Contributions are welcome! If you find any bugs or have suggestions for improvements, feel free to submit a pull request or create an issue.
+## Tests
 
-## License
+```powershell
+python -m unittest discover -s tests -v
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+The tests cover key normalization, Unicode and special-key records, session boundaries, and overwrite protection. They do not simulate operating system keyboard events.
