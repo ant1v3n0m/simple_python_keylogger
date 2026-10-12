@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simple-python-keyboard-recorder"
+version = "0.2.0"
+description = "Visible, opt-in local keyboard event recorder"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["pynput>=1.7,<2"]
+
+[project.gui-scripts]
+keyboard-recorder = "app:main"
+
+[tool.setuptools]
+py-modules = ["app", "demo", "keylog", "recorder"]

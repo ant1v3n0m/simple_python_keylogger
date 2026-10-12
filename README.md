@@ -1,104 +1,70 @@
+# Keyboard event recorder
 
-# Keylogger with Pynput
-
-This project implements a simple keylogger using Python and the `pynput` library. The keylogger listens for keypress events and logs them to a file (`logs.txt`). Special keys like `Space`, `Enter`, and `Backspace` are handled appropriately, and their behavior is reflected in the log.
+An installable, visible Python keylogger for testing keyboard input on a computer you control. Recording begins only after you click **Start recording** and ends on request, when the window is minimized or closed, or when the session limit is reached.
 
 ## Features
-- Logs all keypresses including letters, numbers, and symbols.
-- Handles special keys:
-  - `Space`: Logged as a space character (`' '`).
-  - `Enter`: Logged as a new line (`'\n'`).
-  - `Backspace`: Removes the last character from the log.
-- Supports other keys like `Shift` and `Ctrl` without logging them.
-  
-## Requirements
 
-To run this project, you need the following dependencies:
+- Choose a local output folder and a 5, 15, or 30 minute session limit.
+- Press Esc from any app to stop a recording session.
+- See recording status, event count, remaining time, and output path in the window.
+- Save timestamped JSON Lines records for Unicode characters and named special keys.
+- Keep each session in a unique file. Backspace remains an event rather than rewriting history.
+- Stop on listener, callback, buffer, or file errors. A full event buffer is reported instead of silently losing keys.
+- Keep session data outside the installed application by default. There is no network reporting or automatic startup.
+- Simulate an upload using fixed sample keystrokes and an in-memory receiver. The demo shows the request and receipt without reading session files or sending anything online.
 
-- Python 3.x
-- `pynput` library
+## Install and run
 
-You can install the required library using pip:
+Use Python 3.10 or newer in a graphical desktop session. On Windows, from this repository:
 
-```bash
-pip install pynput
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\keyboard-recorder.exe
 ```
 
-## How to Use
+You can also run `.\.venv\Scripts\python.exe main.pyw`. On macOS or Linux, activate the virtual environment and run `keyboard-recorder`; keyboard monitoring permissions or an X11 session may be required. Protected apps and secure input fields may not be available to the listener.
 
-1. **Clone the Repository:**
+The default session folder is `%LOCALAPPDATA%\KeyboardEventRecorder\Sessions` on Windows, `~/Library/Application Support/KeyboardEventRecorder/Sessions` on macOS, and `$XDG_STATE_HOME/keyboard-event-recorder/sessions` on Linux (or `~/.local/state/keyboard-event-recorder/sessions` when `XDG_STATE_HOME` is unset). You can choose another folder before starting a session.
 
-   ```bash
-   git clone https://github.com/your-username/keylogger-pynput.git
-   cd keylogger-pynput
-   ```
+## Log format
 
-2. **Run the Keylogger:**
+Each line is a separate JSON object. For example:
 
-   After cloning the repository, you can run the keylogger with:
-
-   ```bash
-   python keylogger.py
-   ```
-
-3. **Logging Keystrokes:**
-
-   The keylogger will create or append keystrokes to a file named `logs.txt` in the same directory. Special keys like `Space`, `Enter`, and `Backspace` are processed and handled correctly:
-   - `Space` → Logged as a space (` `).
-   - `Enter` → Logged as a newline.
-   - `Backspace` → Removes the last character from the log file.
-
-4. **Stopping the Keylogger:**
-
-   You can stop the keylogger by pressing `Ctrl + C` in the terminal where it is running.
-
-## Code Explanation
-
-The main functionality uses Python's `pynput` library to listen for key presses.
-
-### Key Components:
-- **`writetofile(key)`**: This function processes each keypress. It handles special keys such as `Space`, `Enter`, and `Backspace` appropriately. For regular characters, it appends them directly to the `logs.txt` file.
-- **`Listener`**: The listener captures all keyboard events and calls the `writetofile` function on each keypress.
-
-### Handling Special Keys:
-- **Space**: Replaces `'Key.space'` with a space character.
-- **Enter**: Replaces `'Key.enter'` with a newline character.
-- **Backspace**: Reads the `logs.txt` file, removes the last character, and writes the updated content back to the file.
-
-### Example Code Snippet:
-
-```python
-def writetofile(key):
-    keydata = str(key)
-    keydata = keydata.replace("'", "")
-
-    # Handle specific key replacements
-    if keydata == 'Key.space':
-        keydata = ' '
-    elif keydata == 'Key.enter':
-        keydata = '\n'
-    elif keydata == 'Key.backspace':
-        with open("logs.txt", 'r') as f:
-            content = f.read()
-        content = content[:-1] if content else content
-        with open("logs.txt", 'w') as f:
-            f.write(content)
-        return
-
-    with open("logs.txt", 'a') as f:
-        f.write(keydata)
+```jsonl
+{"time":"2026-10-12T10:00:00.000+00:00","event":"start","schema_version":1,"os":"Windows"}
+{"time":"2026-10-12T10:00:01.000+00:00","event":"key","kind":"character","value":"a"}
+{"time":"2026-10-12T10:00:02.000+00:00","event":"key","kind":"special","value":"backspace"}
+{"time":"2026-10-12T10:00:03.000+00:00","event":"stop","reason":"user_stopped"}
 ```
 
-## Important Notes
+Timestamps are in UTC. A session ends with a `stop` record when the file can be written. A crash or storage failure may leave a partial final line; JSON Lines readers should handle that possibility.
 
-- This project is intended for educational purposes only. **Make sure to obtain permission** before using this keylogger on any computer or network.
-- Misuse of keylogging software can lead to legal consequences. Ensure that you comply with all relevant laws in your jurisdiction.
+The `os` field is recorded locally once per session. Esc appears as a special-key event before the `escape_key` stop record.
 
-## Contributions
+## Sample upload demo
 
-Contributions are welcome! If you find any bugs or have suggestions for improvements, feel free to submit a pull request or create an issue.
+With recording stopped, click **Simulate sample upload**. A window shows a fixed `h`, `i`, `enter` payload and the receipt returned by an in-memory receiver. The receipt says `network_sent: false`. This illustrates payload creation and acknowledgement for a class presentation; it does not use your recorded keys, ask for a server address, or make a network request.
 
-## License
+## Privacy and limits
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Use this only for a session you have permission to record. Global keyboard events can include passwords, messages, and other private input. Avoid entering secrets while recording, and delete session files when you no longer need them. The program does not identify password fields or automatically redact sensitive text. The files are local JSON Lines, not encrypted.
 
+This is a desktop input testing tool. It does not promise capture from elevated, protected, remote, or secure desktop sessions. Whether those events are available depends on the operating system and its permissions.
+
+## Project layout and tests
+
+- `app.py`: desktop interface and session controls.
+- `demo.py`: offline sample payload and in-memory receipt.
+- `recorder.py`: bounded event queue and start/stop lifecycle.
+- `keylog.py`: key normalization and session file format.
+- `main.pyw`: Windows double-click launcher.
+- `tests/`: normalization, file safety, restart, timeout, overflow, and write-error tests.
+
+Run the tests with:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+CI runs the tests on Windows with Python 3.10 and 3.13. The tests use simulated key events; they do not collect input from the test machine.
